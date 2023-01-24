@@ -90,8 +90,8 @@ published: true
 ```
 
 ```rust:internals.rs
-  pub(super) fn consume_struct(serde_derived_struct: TokenStream) -> Result<TokenStream, Error> {
-      let _: ItemStruct = syn::parse2(serde_derived_struct)?;
+  pub(super) fn consume_struct(input: TokenStream) -> Result<TokenStream, Error> {
+      let _: ItemStruct = syn::parse2(input)?;
       Ok(TokenStream::new())
   }
 ```
