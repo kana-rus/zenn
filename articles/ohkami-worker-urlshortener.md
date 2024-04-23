@@ -885,4 +885,4 @@ async fn my_worker() -> Ohkami {
 
 https://github.com/kana-rus/ohkami
 
-[元の記事](https://zenn.dev/yusukebe/articles/8e4e3831070adc) で宿題とされている、誰でも無限に KV を叩ける点などもそのままなので、そのあたりに手を入れるのも面白いかもしれません。
+[元の記事](https://zenn.dev/yusukebe/articles/8e4e3831070adc) で宿題とされている、誰でも無限に KV を叩ける点などもそのままなので、そのあたりに手を入れてみるのも面白いかもしれません。
