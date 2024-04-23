@@ -77,7 +77,7 @@ async fn my_worker() -> Ohkami {
 }
 ```
 
-となっているはずです。`http://localhost:8787` にアクセスすると `Hello, world!` が返ってきます。
+となっているはずです。`npm run dev` して `http://localhost:8787` にアクセスすると `Hello, world!` が返ってきます。
 
 ここからは、ohkami の紹介を兼ねて [yusukebe さんの記事](https://zenn.dev/yusukebe/articles/8e4e3831070adc#%E3%82%B3%E3%83%BC%E3%83%89%E3%82%92%E6%9B%B8%E3%81%8F) をある程度なぞる形で開発の流れを書いてみます。
 
@@ -122,7 +122,7 @@ macro_rules! page {
 }
 ```
 
-というマクロを用意して JSX 風に書きます。
+というマクロを用意して JSX 風に書くことにします。
 
 ```diff:lib.rs
 + mod pages;
