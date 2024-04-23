@@ -90,10 +90,10 @@ async fn my_worker() -> Ohkami {
 [dependencies]
 console_error_panic_hook = { version = "0.1.7", optional = true }
 
-ohkami = { git = "https://github.com/kana-rus/ohkami.git", features = ["rt_worker"] }
+ohkami = { version = "0.17", features = ["rt_worker"] }
 worker = { version = "0.1.0" }
 
-+ yarte        = { version = "0.15.7" }
++ yarte = { version = "0.15" }
 ```
 
 yarte は `templates/` 以下にテンプレートファイルを置いて
@@ -215,12 +215,13 @@ impl IntoResponse for AppError {
 }
 ```
 
-```rust:fangs.rs
+```diff:fangs.rs
 + use crate::AppError;
 
 〜
 
-Err(err) => AppError::RenderingHTML(err).into_response(),
+- Err(err) => 
++ Err(err) => AppError::RenderingHTML(err).into_response(),
 
 〜
 ```
@@ -450,7 +451,7 @@ impl Payload for CreateUser {
 }
 ```
 
-のように payload としての形式を associated type として持たせ、その形式の payload としての振る舞い (
+のように payload としての形式を associated type として持たせ、payload としての振る舞い (
 
 - リクエストボディからのデシリアライズ処理
 - レスポンスボディとしてのシリアライズ処理
@@ -459,7 +460,7 @@ impl Payload for CreateUser {
 
 <br>
 
-( axum の上に同じものを作ることも普通にできますが、ohkami はこれを builtin で推奨しているということが大事だと思っています )
+( axum の上に同じものを作ることもできますが、ohkami はこれを builtin で推奨しているということが大事だと思っています )
 
 :::
 
@@ -468,7 +469,7 @@ impl Payload for CreateUser {
 
 ( KV の準備については yusukebe さんの記事に譲ります )
 
-ところが、試してみるとわかるのですが `worker::Env` からアクセスできる `worker::kv::KvStore` はそのままではちょっと扱いづらいので、wrapper を作った方がよさそうです。`models` という module に `KvStore` を `KV` 型を定義します。ついでにこのタイミングで `CreateShortenURLForm`, `IndexPage`, `CreatedPage` を `models` から export する形にしておきます。
+ところが、試してみるとわかるのですが `worker::Env` からアクセスできる `worker::kv::KvStore` はそのままではちょっと扱いづらいので、ラッパーを作った方がよさそうです。`models` という module に `KvStore` をラップした `KV` 型を定義します。ついでにこのタイミングで `CreateShortenURLForm`, `IndexPage`, `CreatedPage` を `models` から export する形にしておきます。
 
 ```diff:lib.rs
 + mod models;
@@ -602,7 +603,7 @@ async fn create(
 }
 ```
 
-まず host ですが、ohkami では今のところリクエストのヘッダーを public にしていないため、ハンドラーの引数にできません。`&Request` を引数にするのはさすがに最終手段にしたいところなので、面倒ですが
+まず host ですが、ohkami では今のところリクエストのヘッダーに関する型を public にしていないため、ハンドラーの引数にできません。`&Request` が `FromRequest` を実装しているので引数にできますが、それはさすがに最終手段にしたいところです。ここでは面倒ですが
 
 ```diff:models.rs
 + pub struct Host<'req>(&'req str);
@@ -633,11 +634,11 @@ https://x.com/kana_rus/status/1782446441144959388
 [dependencies]
 console_error_panic_hook = { version = "0.1.7", optional = true }
 
-ohkami = { git = "https://github.com/kana-rus/ohkami.git", features = ["rt_worker"] }
+ohkami = { version = "0.17", features = ["rt_worker"] }
 worker = { version = "0.1.0" }
 
-yarte        = { version = "0.15.7" }
-+ wasm-bindgen = { version = "0.2.92" }
+yarte          = { version = "0.15" }
++ wasm-bindgen = { version = "0.2" }
 ```
 
 ```diff:lib.rs
@@ -782,6 +783,8 @@ async fn with_status(uri: Uri) -> status::NotFound<String> {
 このままだと `CreatedPage` と `ErrorPage` を出し分けられないので、enum を作りましょう。
 
 ```diff:models.rs
+- pub use pages::CreatedPage;
+
 + pub enum CreatedOrErrorPage {
 +     Created { shorten_url: String },
 +     Error,
@@ -885,4 +888,4 @@ async fn my_worker() -> Ohkami {
 
 https://github.com/kana-rus/ohkami
 
-[元の記事](https://zenn.dev/yusukebe/articles/8e4e3831070adc) で宿題とされている、誰でも無限に KV を叩ける点などもそのままなので、そのあたりに手を入れてみるのも面白いかもしれません。
+誰でも無限に KV を叩けるなど、[元の記事](https://zenn.dev/yusukebe/articles/8e4e3831070adc) で宿題とされている点もそのままなので、そのあたりに手を入れてみるのも面白いかもしれません。
