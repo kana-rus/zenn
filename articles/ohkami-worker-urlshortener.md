@@ -3,7 +3,7 @@ title: "Rust の自作 web framework を Cloudflare Workers で動かして URL 
 emoji: "🐺"
 type: "tech"
 topics: ["rust", "cloudflareworkers", "ohkami"]
-published: false
+published: true
 ---
 
 ## 背景など
@@ -133,7 +133,13 @@ use yarte::Template;
 
 
 macro_rules! page {
-    /* 略 */
+    ($name:ident = ($({$( $field:ident: $t:ty ),*})? $(;$semi:tt)?) => $template:literal) => {
+        #[derive(Template)]
+        #[template(src = $template)]
+        pub struct $name $({
+            $( pub $field: $t ),*
+        })? $($semi)?
+    };
 }
 
 page!(Layout = ({ content: String }) => r#"<!DOCTYPE html>
@@ -457,8 +463,7 @@ async fn create_user(extract::Json(payload): extract::Json<CreateUser>) {
 「 ある構造体が payload として扱われるときの形式は、その構造体自身が知っている 」
 
 のが健全ではないでしょうか？
-status::
-status::
+
 この視点からすると、`Json` という形式を `CreateUser` の外からはめ込むのではなく
 
 ```rust
@@ -640,7 +645,7 @@ async fn create(
 }
 ```
 
-さて uuid を扱うところですが、
+さて `/* uuid の左から６文字 */` の部分ですが、
 
 https://x.com/kana_rus/status/1782403152534528339
 
@@ -745,7 +750,7 @@ async fn my_worker() -> Ohkami {
 + }
 ```
 
-ハンドラーの最初の引数が `FromParam` を実装しているもしくはそのタプルである場合に、ohkami はそれをパスパラメータと解釈し、ルーティング時にマッチしたパラメータを渡します。
+ハンドラーの最初の引数が `FromParam` を実装している型もしくはそのタプル型である場合に、ohkami はそれをパスパラメータと解釈し、ルーティング時にマッチしたパラメータを渡します。
 
 
 :::details typed::status について
@@ -791,7 +796,7 @@ async fn with_status(uri: Uri) -> NotFound<String> {
 + "#);
 ```
 
-`CreatedPage` と `ErrorPage` を出し分けるための enum を作りましょう。
+そして `CreatedPage` と `ErrorPage` を出し分けるための enum を用意しましょう。
 
 ```diff:models.rs
 - pub use pages::CreatedPage;
