@@ -593,7 +593,7 @@ impl IntoResponse for AppError {
 }
 ```
 
-これで、`lib.rs` に `use models::{IndexPage, CreatedPage, CreateShortenURLForm, KV};` を追加して `create` をこんな感じで実装できます：
+これで、`lib.rs` に `use models::{IndexPage, CreatedPage, CreateShortenURLForm, KV};` を追加してこんな感じにできます：
 
 ```rust:lib.rs
 〜
@@ -608,6 +608,10 @@ const ORIGIN: &str = if cfg!(feature = "DEBUG") {
 };
 
 〜
+
+async fn index() -> IndexPage {
+    IndexPage
+}
 
 async fn create(
     kv:   KV,
@@ -890,7 +894,7 @@ async fn my_worker() -> Ohkami {
 おそらくこの記事を読んだ方のほとんどが ohkami を初めて見たと思うのですが、どう感じたでしょうか？ 他のフレームワークに比べて書いていて楽しそうと思っていただけたら幸いです。
 
 元々は actix-web や axum のルーティングを初めて見て「 うーん ~~...ダサくね？~~ 」と思って色々と勉強しながら作り始めたフレームワークで、幾度となく根本的な書き直しを経て少しずつまともになり、今や少なくとも Cloudflare Workers で普通に動くところまで来ました。
-まだまだ大きな課題が色々とありますが、今後も成長していく予定なので、気に入った方はぜひスターを ...！
+まだまだ大きな課題が色々とありますが、今後も成長していく予定なので、気に入った方はぜひスターを ...！🐺
 
 https://github.com/kana-rus/ohkami
 
@@ -898,4 +902,4 @@ https://github.com/kana-rus/ohkami
 
 https://github.com/kana-rus/ohkami-worker-urlshortener
 
-を clone してそのあたりに手を入れてみるのも面白いかもしれません🐺
+を clone してそのあたりに手を入れてみるのも面白いかもしれません。
