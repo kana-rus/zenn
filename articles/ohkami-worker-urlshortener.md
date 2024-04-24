@@ -533,7 +533,7 @@ impl KV {
         key: &'kv str,
     ) -> impl Future<Output = Result<Option<String>, AppError>> + Send + 'kv {
         SendFuture::new(async move {
-            self.0.get(key.as_ref())
+            self.0.get(key)
                 .text().await
                 .map_err(AppError::kv)
         })
@@ -545,7 +545,7 @@ impl KV {
         value: impl ToRawKvValue + 'kv,
     ) -> impl Future<Output = Result<(), AppError>> + Send + 'kv {
         SendFuture::new(async move {
-            self.0.put(key.as_ref(), value).unwrap()
+            self.0.put(key, value).unwrap()
                 .execute().await.map_err(AppError::kv)
         })
     }
@@ -786,7 +786,7 @@ async fn with_status(uri: Uri) -> NotFound<String> {
 + "#);
 ```
 
-このままだと `CreatedPage` と `ErrorPage` を出し分けられないので、enum を作りましょう。
+`CreatedPage` と `ErrorPage` を出し分けるための enum を作りましょう。
 
 ```diff:models.rs
 - pub use pages::CreatedPage;
@@ -884,7 +884,7 @@ async fn my_worker() -> Ohkami {
 
 ## まとめ
 
-読んでいただきありがとうございます🐺
+読んでいただきありがとうございます。
 
 おそらくこの記事を読んだ方のほとんどが ohkami を初めて見たと思うのですが、どう感じたでしょうか？ 他のフレームワークに比べて書いていて楽しそうと思っていただけたら幸いです。
 
@@ -897,4 +897,4 @@ https://github.com/kana-rus/ohkami
 
 https://github.com/kana-rus/ohkami-worker-urlshortener
 
-を clone してそのあたりに手を入れてみるのも面白いかもしれません。
+を clone してそのあたりに手を入れてみるのも面白いかもしれません🐺
