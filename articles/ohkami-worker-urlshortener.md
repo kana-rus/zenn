@@ -8,7 +8,7 @@ published: false
 
 ## 背景など
 
-以前から HTTP の勉強も兼ねて [ohkami](https://github.com/kana-rus/ohkami) という Rust の web framework を作っていて、yusukebe さんの
+HTTP の勉強も兼ねて [ohkami](https://github.com/kana-rus/ohkami) という Rust の web framework を作っていて、以前 yusukebe さんの
 
 https://zenn.dev/yusukebe/articles/8e4e3831070adc
 
@@ -18,7 +18,7 @@ https://blog.ojisan.io/cf-axum-muriyari/
 
 https://developers.cloudflare.com/workers/languages/rust/
 
-を偶然読んで、これは ohkami 君普通に Workers で動くのではと思い立ち~~大学の授業をサボりまくって~~ Workers 対応を行い、dog fooding の一環として URL Shortener を作ってみました。
+を偶然読んで、これは ohkami 君普通に Workers で動きそうだなと思い立ち~~大学の授業をサボりまくって~~ Workers 対応を行い、dog fooding の一環として URL Shortener を作ってみました。
 
 https://github.com/kana-rus/ohkami-worker-urlshortener
 
@@ -77,7 +77,7 @@ async fn my_worker() -> Ohkami {
 }
 ```
 
-となっているはずです。`npm run dev` して `http://localhost:8787` にアクセスすると `Hello, world!` が返ってきます。
+となっているはずです。`npm run dev` して `http://localhost:8787` にアクセスすると `Hello, world!` が返ってきます。( `dev` では `DEBUG` feature が有効になるので、Rust の panic を console.error として表示してくれます )
 
 ここからは、ohkami の紹介を兼ねて [yusukebe さんの記事](https://zenn.dev/yusukebe/articles/8e4e3831070adc#%E3%82%B3%E3%83%BC%E3%83%89%E3%82%92%E6%9B%B8%E3%81%8F) をある程度なぞる形で開発の流れを書いてみます。
 
@@ -93,7 +93,7 @@ console_error_panic_hook = { version = "0.1.7", optional = true }
 ohkami = { version = "0.17", features = ["rt_worker"] }
 worker = { version = "0.1.0" }
 
-+ yarte = { version = "0.15" }
++ yarte = { version = "0.15.7" }
 ```
 
 yarte は `templates/` 以下にテンプレートファイルを置いて
@@ -163,6 +163,22 @@ page!(Layout = ({ content: String }) => r#"<!DOCTYPE html>
 
 ```diff:lib.rs
 + mod fangs;
+
++ use fangs::LayoutFang;
+
+use ohkami::prelude::*;
+
+
+#[ohkami::worker]
+async fn my_worker() -> Ohkami {
+    #[cfg(feature = "DEBUG")]
+    console_error_panic_hook::set_once();
+
+-   Ohkami::new((
++   Ohkami::with(LayoutFang, (
+        "/".GET(|| async {"Hello, world!"}),
+    ))
+}
 ```
 
 ```rust:fangs.rs
@@ -192,6 +208,7 @@ impl FangAction for LayoutFang {
 
 ```diff:lib.rs
 + mod errors;
+
 + use errors::AppError;
 ```
 
@@ -273,7 +290,8 @@ async fn index() -> Result<String, AppError> {
     use yarte::Template;
 
     match (pages::IndexPage).call() {
-        Ok(html) => //
+        Ok(html) => Response::OK().with_html(html),
+        Err(err) => //
     }
 }
 ```
@@ -340,6 +358,8 @@ async fn index() -> pages::IndexPage {
 ```
 
 ```rust:lib.rs
+〜
+
 + use ohkami::typed::Payload;
 + use ohkami::builtin::payload::URLEncoded;
 + use std::borrow::Cow;
@@ -424,7 +444,7 @@ async fn create_user(extract::Json(payload): extract::Json<CreateUser>) {
     // payload is a `CreateUser`
 }
 ```
-( https://docs.rs/axum/latest/axum/struct.Json.html から引用 )
+( https://docs.rs/axum/0.7.5/axum/struct.Json.html から引用 )
 
 みたいな感じで扱うのが通例ですが、これだと `CreateUser` は `Json` 以外の extractor で包めば `application/json` 以外の payload にも普通に流用できます。が、フレームワークとしてそれはどうなんでしょうか？
 
@@ -436,7 +456,8 @@ async fn create_user(extract::Json(payload): extract::Json<CreateUser>) {
 「 ある構造体が payload として扱われるときの形式は、その構造体自身が知っている 」
 
 のが健全ではないでしょうか？
-
+status::
+status::
 この視点からすると、`Json` という形式を `CreateUser` の外からはめ込むのではなく
 
 ```rust
@@ -451,7 +472,7 @@ impl Payload for CreateUser {
 }
 ```
 
-のように payload としての形式を associated type として持たせ、payload としての振る舞い (
+みたいに payload としての形式を associated type として持たせ、payload としての振る舞い (
 
 - リクエストボディからのデシリアライズ処理
 - レスポンスボディとしてのシリアライズ処理
@@ -469,7 +490,7 @@ impl Payload for CreateUser {
 
 ( KV の準備については yusukebe さんの記事に譲ります )
 
-ところが、試してみるとわかるのですが `worker::Env` からアクセスできる `worker::kv::KvStore` はそのままではちょっと扱いづらいので、ラッパーを作った方がよさそうです。`models` という module に `KvStore` をラップした `KV` 型を定義します。ついでにこのタイミングで `CreateShortenURLForm`, `IndexPage`, `CreatedPage` を `models` から export する形にしておきます。
+ところが、試してみるとわかるのですが、`worker::Env` からアクセスできる `worker::kv::KvStore` も関連するエラー型の `worker::kv::KvError` も `Send` でなくそのままでは扱いづらいので、ラッパーを作った方がよさそうです。`KvStore` をラップした `KV` 型を `models` という module に 定義します。ついでにこのタイミングで `CreateShortenURLForm`, `IndexPage`, `CreatedPage` を `models` から export する形にしておきます。
 
 ```diff:lib.rs
 + mod models;
@@ -486,7 +507,7 @@ use crate::{pages, AppError};
 
 pub use pages::IndexPage;
 
-pub use pages::Created;
+pub use pages::CreatedPage;
 
 #[Payload(URLEncoded/D)] // Payload + Deserialize の shorthand
 #[derive(Debug)]
@@ -531,8 +552,6 @@ impl KV {
 }
 ```
 
-ここで以下のように `AppError::KV` を追加しています。
-
 ```diff:errors.rs
 + use worker::send::SendWrapper;
 
@@ -576,6 +595,19 @@ impl IntoResponse for AppError {
 これで、`lib.rs` に `use models::{IndexPage, CreatedPage, CreateShortenURLForm, KV};` を追加して `create` をこんな感じで実装できます：
 
 ```rust:lib.rs
+〜
+
+const ORIGIN: &str = if cfg!(feature = "DEBUG") {
+    "http://localhost:8787"
+} else {
+    "https://＜worker name＞.＜workers subdomain＞"
+
+    // 冒頭のリポジトリでは
+    // "https://ohkami-urlshortener.kanarus.workers.dev"
+};
+
+〜
+
 async fn create(
     kv:   KV,
     form: CreateShortenURLForm<'_>,
@@ -598,33 +630,14 @@ async fn create(
     kv.put(&*key.clone(), form.url).await?;
 
     Ok(CreatedPage {
-        shorten_url: format!("https://{}/{key}", /* host */)
+        shorten_url: format!("https://{ORIGIN}/{key}")
     })
 }
 ```
 
-まず host ですが、ohkami では今のところリクエストのヘッダーに関する型を public にしていないため、ハンドラーの引数にできません。`&Request` が `FromRequest` を実装しているので引数にできますが、それはさすがに最終手段にしたいところです。ここでは面倒ですが
+さて uuid を扱うところですが、
 
-```diff:models.rs
-+ pub struct Host<'req>(&'req str);
-+ impl<'req> FromRequest<'req> for Host<'req> {
-+     type Error = std::convert::Infallible;
-+     fn from_request(req: &'req Request) -> Option<Result<Self, Self::Error>> {
-+         req.headers.Host().map(Self).map(Ok)
-+     }
-+ }
-+ impl std::fmt::Display for Host<'_> {
-+     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-+         f.write_str(self.0)
-+     }
-+ }
-```
-
-を用意して `create` の引数に追加します。
-
-次に uuid を扱うところですが、
-
-https://twitter.com/kana_rus/status/1782403152534528339
+https://x.com/kana_rus/status/1782403152534528339
 
 https://x.com/kana_rus/status/1782446441144959388
 
@@ -637,8 +650,8 @@ console_error_panic_hook = { version = "0.1.7", optional = true }
 ohkami = { version = "0.17", features = ["rt_worker"] }
 worker = { version = "0.1.0" }
 
-yarte          = { version = "0.15" }
-+ wasm-bindgen = { version = "0.2" }
+yarte          = { version = "0.15.7" }
++ wasm-bindgen = { version = "0.2.92" }
 ```
 
 ```diff:lib.rs
@@ -658,7 +671,6 @@ extern "C" {
 ```rust:lib.rs
 async fn create(
     kv:   KV,
-    host: Host<'_>,
     form: CreateShortenURLForm<'_>,
 ) -> Result<CreatedPage, AppError> {
     if let Err(_) = worker::Url::parse(&form.url) {
@@ -687,7 +699,7 @@ async fn create(
     kv.put(&*key.clone(), form.url).await?;
 
     Ok(CreatedPage {
-        shorten_url: format!("https://{host}/{key}")
+        shorten_url: format!("https://{ORIGIN}/{key}")
     })
 }
 ```
@@ -716,10 +728,6 @@ async fn my_worker() -> Ohkami {
     ))
 }
 
-async fn index() -> IndexPage {
-    IndexPage
-}
-
 〜
 
 + async fn redirect_from_shorten_url(shorten_url: &str,
@@ -732,7 +740,7 @@ async fn index() -> IndexPage {
 + }
 ```
 
-ハンドラーの最初の引数が `FromParam` を実装している値、もしくはそのタプルである場合に ohkami はそれをパスパラメータと解釈し、ルーティングの `:` で始まるセグメントにマッチしたパラメータを対応する引数に渡します。
+ハンドラーの最初の引数が `FromParam` を実装している値もしくはそのタプルである場合に、ohkami はそれをパスパラメータと解釈し、ルーティングの `:` で始まるセグメントにマッチしたパラメータを対応する引数に渡します。
 
 
 :::details typed::status について
@@ -746,15 +754,13 @@ async fn with_status(uri: Uri) -> (StatusCode, String) {
     (StatusCode::NOT_FOUND, format!("Not Found: {}", uri.path()))
 }
 ```
-( https://docs.rs/axum/latest/axum/response/index.html から引用 )
+( https://docs.rs/axum/0.7.5/axum/response/index.html から引用 )
 
 みたいなハンドラーが書かれますが、
 
 ```rust
-async fn with_status(uri: Uri) -> status::NotFound<String> {
-    status::NotFound(
-        format!("Not Found: {}", uri.path())
-    )
+async fn with_status(uri: Uri) -> NotFound<String> {
+    NotFound(format!("Not Found: {}", uri.path()))
 }
 ```
 
@@ -804,7 +810,6 @@ async fn with_status(uri: Uri) -> status::NotFound<String> {
 ```rust
 async fn create(
     kv:   KV,
-    host: Host<'_>,
     form: CreateShortenURLForm<'_>,
 ) -> Result<CreatedOrErrorPage, AppError> {
     if let Err(_) = worker::Url::parse(&form.url) {
@@ -821,15 +826,16 @@ async fn create(
             break key
         }
     };
+
     kv.put(&key.clone(), form.url).await?;
     
     Ok(CreatedOrErrorPage::Created {
-        shorten_url: format!("https://{host}/{key}"),
+        shorten_url: format!("https://{ORIGIN}/{key}"),
     })
 }
 ```
 
-とすれば、URL でない入力に対してエラーページを返せます。
+とすれば URL でない入力に対してエラーページを返せます。
 
 
 ### CSRFプロテクターを入れる
@@ -841,12 +847,12 @@ async fn create(
 + pub struct CSRFang;
 + impl FangAction for CSRFang {
 +     async fn fore<'a>(&'a self, req: &'a mut Request) -> Result<(), Response> {
-+         let referer = req.headers.Referer();
-+         let host    = req.headers.Host().ok_or_else(|| Response::BadRequest())?;
-+         (referer == Some(&format!("https://{host}/")))
++         let origin = req.headers.Origin()
++             .ok_or_else(|| Response::BadRequest())?;
++         (origin == crate::ORIGIN)
 +             .then_some(())
 +             .ok_or_else(|| {
-+                 worker::console_warn!("Unexpected request from {}", referer.unwrap_or("no referer"));
++                 worker::console_warn!("Unexpected request from {origin}");
 +                 Response::Forbidden()
 +             })
 +     }
@@ -878,14 +884,17 @@ async fn my_worker() -> Ohkami {
 
 ## まとめ
 
-読んでいただいてありがとうございます。
+読んでいただきありがとうございます🐺
 
-おそらくこの記事を読んだ方のほとんどが ohkami を初めて見たと思うのですが、どう感じたでしょうか？
-他のフレームワークに比べて書いていて楽しそうと思っていただけたら幸いです。
+おそらくこの記事を読んだ方のほとんどが ohkami を初めて見たと思うのですが、どう感じたでしょうか？ 他のフレームワークに比べて書いていて楽しそうと思っていただけたら幸いです。
 
 元々は actix-web や axum のルーティングを初めて見て「 うーん ~~...ダサくね？~~ 」と思って色々と勉強しながら作り始めたフレームワークで、幾度となく根本的な書き直しを経て少しずつまともになり、今や少なくとも Cloudflare Workers で普通に動くところまで来ました。
 まだまだ大きな課題が色々とありますが、今後も成長していく予定なので、気に入った方はぜひスターを ...！
 
 https://github.com/kana-rus/ohkami
 
-誰でも無限に KV を叩けるなど、[元の記事](https://zenn.dev/yusukebe/articles/8e4e3831070adc) で宿題とされている点もそのままなので、そのあたりに手を入れてみるのも面白いかもしれません。
+この記事の実装は誰でも無限に KV を叩けるなど元の記事で[宿題](https://zenn.dev/yusukebe/articles/8e4e3831070adc#%E3%81%BE%E3%81%A8%E3%82%81)とされている点もそのままなので、気が向いた方は
+
+https://github.com/kana-rus/ohkami-worker-urlshortener
+
+を clone してそのあたりに手を入れてみるのも面白いかもしれません。
