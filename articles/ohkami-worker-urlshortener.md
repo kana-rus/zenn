@@ -160,6 +160,7 @@ page!(Layout = ({ content: String }) => r#"<!DOCTYPE html>
 ( `{{ }}` で通常の埋め込み、`{{{ }}}` でエスケープされない埋め込みになります )
 
 そしてレイアウトの適用は、ohkami のミドルウェアシステムである fangs で実現します。
+`LayoutFang` という struct に「 レスポンスボディが HTML だったら `LayoutPage` に包む 」という挙動を実装し、`Ohkami::with` で渡します。
 
 ```diff:lib.rs
 + mod fangs;
@@ -183,7 +184,7 @@ async fn my_worker() -> Ohkami {
 
 ```rust:fangs.rs
 use ohkami::prelude::*;
-use yarte::Template as _;
+use yarte::Template;
 use crate::pages::Layout;
 
 
@@ -195,7 +196,7 @@ impl FangAction for LayoutFang {
             let content = res.drop_content()
                 .map(|bytes| String::from_utf8(bytes.into_owned()).unwrap())
                 .unwrap_or_else(String::new);
-            *res = match (Layout { content }.call()) { /* Template::call */
+            *res = match (Layout { content }.call()) {// ← Template::call
                 Ok(html) => Response::OK().with_html(html),
                 Err(err) => //
             };
@@ -204,7 +205,7 @@ impl FangAction for LayoutFang {
 }
 ```
 
-ここでレンダリングのエラーをハンドリングしたいので、エラー型を用意します。
+ここでレンダリングエラーをハンドリングしたいので、エラー型を用意します。
 
 ```diff:lib.rs
 + mod errors;
@@ -630,7 +631,7 @@ async fn create(
     kv.put(&*key.clone(), form.url).await?;
 
     Ok(CreatedPage {
-        shorten_url: format!("https://{ORIGIN}/{key}")
+        shorten_url: format!("{ORIGIN}/{key}")
     })
 }
 ```
@@ -683,7 +684,7 @@ async fn create(
         let key = std::sync::Arc::new({
             let mut uuid = js::randomUUID();
 
-            // trancate が好きなので...
+            // trancate が好きなので
             unsafe { uuid.as_mut_vec().trancate(6) }
             // 
             // while uuid.len() > 6 {uuid.pop();}
@@ -699,7 +700,7 @@ async fn create(
     kv.put(&*key.clone(), form.url).await?;
 
     Ok(CreatedPage {
-        shorten_url: format!("https://{ORIGIN}/{key}")
+        shorten_url: format!("{ORIGIN}/{key}")
     })
 }
 ```
@@ -740,7 +741,7 @@ async fn my_worker() -> Ohkami {
 + }
 ```
 
-ハンドラーの最初の引数が `FromParam` を実装している値もしくはそのタプルである場合に、ohkami はそれをパスパラメータと解釈し、ルーティングの `:` で始まるセグメントにマッチしたパラメータを対応する引数に渡します。
+ハンドラーの最初の引数が `FromParam` を実装している値もしくはそのタプルである場合に、ohkami はそれをパスパラメータと解釈し、ルーティングの `:` で始まるセグメントにマッチしたパラメータを渡します。
 
 
 :::details typed::status について
@@ -830,7 +831,7 @@ async fn create(
     kv.put(&key.clone(), form.url).await?;
     
     Ok(CreatedOrErrorPage::Created {
-        shorten_url: format!("https://{ORIGIN}/{key}"),
+        shorten_url: format!("{ORIGIN}/{key}"),
     })
 }
 ```
