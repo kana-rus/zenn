@@ -498,6 +498,15 @@ impl Payload for CreateUser {
 
 ところが、試してみるとわかるのですが、`worker::Env` からアクセスできる `worker::kv::KvStore` も関連するエラー型の `worker::kv::KvError` も `Send` でなくそのままでは扱いづらいので、ラッパーを作った方がよさそうです。`KvStore` をラップした `KV` 型を `models` という module に 定義します。ついでにこのタイミングで `CreateShortenURLForm`, `IndexPage`, `CreatedPage` を `models` から export する形にしておきます。
 
+:::message
+**追記 / 当時の自分へのヒント**
+
+- ハンドラーに `#[worker::send]` つければ `SendWrapper` とかいらない
+- `AppError` に `From<worker::Error>` と `From<KvError>` を impl しておけば各所で `.map_err(AppError::〜)` を書きまくらなくてよくなる
+
+以上を合わせると `KV` などというラッパーも必要なく、とてもすっきりする ( https://github.com/kana-rus/ohkami-worker-urlshortener )
+:::
+
 ```diff:lib.rs
 + mod models;
 ```
@@ -714,6 +723,10 @@ async fn create(
 }
 ```
 
+:::message
+**追記 / 当時の自分へのヒント**
+`String::trancate` あるよ ( しかも unsafe じゃないよ )
+:::
 
 ### リダイレクトさせる
 
@@ -749,6 +762,11 @@ async fn my_worker() -> Ohkami {
 +     }
 + }
 ```
+
+:::message
+**追記 / 当時の自分へのヒント**
+`:shorten_url` じゃなくて `:key` とかの方が自然 ( uuid の先頭６文字が渡ってくるわけなので "url" じゃないよね )
+:::
 
 ハンドラーの最初の引数が `FromParam` を実装している型もしくはそのタプル型である場合に、ohkami はそれをパスパラメータと解釈し、ルーティング時にマッチしたパラメータを渡します。
 
@@ -846,6 +864,16 @@ async fn create(
 ```
 
 とすれば URL でない入力に対してエラーページを返せます。
+
+:::message
+それはセンス悪くて、単に `AppError::Valudation::into_response` で `ErrorPage` を返すようにすればいいだけ。ハンドラーの返り値はあくまで
+
+```rust
+Result<CreatedPage/* 正常系 */, AppError/* 異常系 */>
+```
+
+となっているべき
+:::
 
 
 ### CSRFプロテクターを入れる
