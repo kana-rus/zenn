@@ -6,7 +6,7 @@ topics:    ["async", "rust", "go"]
 published: true
 ---
 
-現状 tokio 環境しか試してないので以下 tokio 前提になりますが、tokio なしでも ( [`futures-channel`](https://github.com/rust-lang/futures-rs/tree/master/futures-channel) など使ったり自作したりで ) 工夫すれば同じようにできるとは思います。
+現状 tokio 環境でしか試してないので以下 tokio 前提になりますが、tokio なしでも ( [`futures-channel`](https://github.com/rust-lang/futures-rs/tree/master/futures-channel) など使ったり自作したりで ) 工夫すれば同じようにできるとは思います。
 
 
 ## 概要
@@ -117,4 +117,4 @@ drop(close_rx);
 close_tx.closed().await;
 ```
 
-みたいな感じで、簡潔に実装できました。( もしまずいところがあればぜひコメントかプルリクで教えてください @有識者 )
+という感じで、簡潔に実装できました。( もしまずいところがあればぜひコメントかプルリクで教えてください @有識者 )
