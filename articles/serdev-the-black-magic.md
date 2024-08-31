@@ -258,4 +258,4 @@ struct serdev_proxy_SignupData {
 
 ## おわりに
 
-[Parse, dont' validate](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate) を踏まえて [Serde with Validation](https://github.com/ohkami-rs/serdev) についてどう思うか、いろんな人の意見を知りたい気持ちがあるので、何か思うことがある方はぜひこの記事のコメントか SNS にでも書いてください 👀　SerdeV を気に入った側の方は star をつけていただけると嬉しいです。
+[Parse, dont' validate](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate) を踏まえて [Serde with Validation](https://github.com/ohkami-rs/serdev) についてどう思うか、いろんな人の意見を知りたい気持ちがあるので、何か思うことがある方はぜひこの記事のコメントか SNS にでも書いてください 👀　SerdeV を気に入った方は star をつけていただけると嬉しいです。
