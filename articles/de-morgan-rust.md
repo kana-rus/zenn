@@ -240,7 +240,7 @@ fn __de_morgan_s_law_1__<P: Variable, Q: Variable>() ->
         }
     }
 
-    /// ¬(P ∨ Q) → ¬P ∧ ¬Q
+    /// ¬(P ∨ Q) ← ¬P ∧ ¬Q
     fn right<P: Variable, Q: Variable>() ->
         Imply<And<Not<P>, Not<Q>>, Not<Or<P, Q>>>
     {
