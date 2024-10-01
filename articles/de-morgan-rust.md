@@ -184,7 +184,7 @@ fn example_or<P: Variable, Q: Variable>() -> Imply<Or<P, Q>, Or<Q, P>> {
 type Bot = never
 ```
 
-となっています。Rust では never 型を ( 型として ) 直接扱うことは今のところ unsatable なので、`#![feature(never_type)]` とした上で
+となっています。Rust では never 型を ( 型として ) 直接扱うことは今のところ unstable なので、`#![feature(never_type)]` とした上で
 
 ```rust:Rust
 pub type Bottom = !;
@@ -291,7 +291,7 @@ fn __de_morgan_s_law_2__<P: Variable, Q: Variable>() ->
     {
         /// P ∨ ¬P
         fn excluded_middle<P: Variable>() -> Or<P, Not<P>> {
-            unreachable!("axios")
+            unreachable!("axiom")
         }
 
         Imply! {(notAndPQ: Not<And<P, Q>>) =>
@@ -326,7 +326,7 @@ const excludedMiddle = <P>(): Or<P, Not<P>> =>
 ```rust:Rust
 /// P ∨ ¬P
 fn excluded_middle<P: Variable>() -> Or<P, Not<P>> {
-    unreachable!("axios")
+    unreachable!("axiom")
 }
 ```
 
