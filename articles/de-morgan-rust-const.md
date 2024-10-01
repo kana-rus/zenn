@@ -6,11 +6,11 @@ topics: ["rust", "型", "math", "logic"]
 published: true
 ---
 
-[ド・モルガンの法則を Rust で証明してみた](https://zenn.dev/kanal/articles/de-morgan-rust) の続編というか補足です。元記事 (
+[ド・モルガンの法則を Rust で証明してみた](https://zenn.dev/kanal/articles/de-morgan-rust) の続編というか補足です。元記事
 
 https://zenn.dev/mutex_inc/articles/de-morgan-ts
 
-) の冒頭に挙げられている、実行結果をもって証明となるコード：
+の冒頭に挙げられている、実行結果をもって証明となるコード：
 
 ```ts:TypeScript
 const booleans = [true, false]
@@ -62,9 +62,9 @@ Rust では `match` で網羅性を静的に検証できるので、「静的に
 ここでは、せっかくなので直接「あらゆる２つの bool の組み合わせについて何かする処理」を作ります：
 
 ```rust
-macro_rules! for_all_cominations_of_two_bools {
+macro_rules! for_all_combinations_of_two_bools {
     (($P:ident, $Q:ident) => $proc:expr) => {
-        for_all_cominations_of_two_bools! {
+        for_all_combinations_of_two_bools! {
             @($P, $Q) in checked[
                 (true,  true ),
                 (true,  false),
@@ -95,7 +95,7 @@ macro_rules! for_all_cominations_of_two_bools {
 
 ```rust
 const fn main() {
-    for_all_cominations_of_two_bools! {(P, Q) => {
+    for_all_combinations_of_two_bools! {(P, Q) => {
         static_assert!({!(P || Q)} == {(!P) && (!Q)});
         static_assert!({!(P && Q)} == {(!P) || (!Q)});
     }}
@@ -108,6 +108,6 @@ const fn main() {
 
 この記事のコードは
 
-https://play.rust-lang.org/?version=stable&mode=debug&edition=2021&gist=fcae945eff0770ca41f5fef78f56a754
+https://play.rust-lang.org/?version=stable&mode=debug&edition=2021&gist=93f98843306867bbdc94f20dadddad2a
 
 に置いてあるので、気になった方は `static_assert!` の中をいじってコンパイルエラーを吐かせるなどして遊んで、これでド・モアブルの定理がコンパイル時に証明されていることを確かめてみてください。
