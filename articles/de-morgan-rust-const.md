@@ -10,7 +10,7 @@ published: true
 
 https://zenn.dev/mutex_inc/articles/de-morgan-ts
 
-の冒頭に挙げられている、実行結果をもって証明とする方針：
+の冒頭に挙げられている、実行結果をもって証明とするコード：
 
 ```ts:TypeScript
 const booleans = [true, false]
