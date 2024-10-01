@@ -10,7 +10,7 @@ published: true
 
 https://zenn.dev/mutex_inc/articles/de-morgan-ts
 
-の冒頭に挙げられている、実行結果をもって証明となるコード：
+の冒頭に挙げられている、実行結果をもって証明とする方針：
 
 ```ts:TypeScript
 const booleans = [true, false]
@@ -26,7 +26,7 @@ booleans.forEach(
 )
 ```
 
-について、Rust なら const 文脈での計算によってこの方針でコンパイル時に証明できることを示します。
+について、Rust なら const 文脈での計算によってこれと同じ方針でコンパイル時に証明できることを示します。
 
 ## 準備
 
