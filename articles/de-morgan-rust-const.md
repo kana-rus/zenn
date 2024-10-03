@@ -110,4 +110,4 @@ const fn main() {
 
 https://play.rust-lang.org/?version=stable&mode=debug&edition=2021&gist=93f98843306867bbdc94f20dadddad2a
 
-に置いてあるので、気になった方は `static_assert!` の中をいじってコンパイルエラーを吐かせるなどして遊んで、これでド・モアブルの定理がコンパイル時に証明されていることを確かめてみてください。
+に置いてあるので、気になった方は `static_assert!` の中をいじってコンパイルエラーを吐かせるなどして遊んで、これでド・モルガンの定理がコンパイル時に証明されていることを確かめてみてください。
